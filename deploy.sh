@@ -7,7 +7,18 @@ cd "$PROJECT_DIR"
 
 SERVICE_NAME="${GUNICORN_SERVICE:-gunicorn}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
-VENV_DIR="${VENV_DIR:-${PROJECT_DIR}/venv}"
+
+# Resolve virtualenv: prefer user-specified; else auto-detect ../venv then ./venv
+if [ -n "${VENV_DIR:-}" ]; then
+  VENV_DIR="${VENV_DIR}"
+elif [ -d "${PROJECT_DIR}/../venv" ]; then
+  VENV_DIR="${PROJECT_DIR}/../venv"
+elif [ -d "${PROJECT_DIR}/venv" ]; then
+  VENV_DIR="${PROJECT_DIR}/venv"
+else
+  echo "Error: virtualenv not found. Set VENV_DIR or create ./venv or ../venv."
+  exit 1
+fi
 
 echo "Using project dir: $PROJECT_DIR"
 echo "Virtualenv: $VENV_DIR"
@@ -28,7 +39,8 @@ python -m pip install -r requirements.txt >/tmp/deploy_requirements.log && echo 
 # Run migrations/static as part of deploy
 echo "[3/3] Applying migrations..."
 python manage.py migrate --noinput >/tmp/deploy_migrate.log && echo "migrate: OK" || { echo "migrate FAILED"; cat /tmp/deploy_migrate.log; exit 1; }
-# python manage.py collectstatic --noinput
+echo "[extra] collectstatic..."
+python manage.py collectstatic --noinput >/tmp/deploy_collectstatic.log && echo "collectstatic: OK" || { echo "collectstatic FAILED"; cat /tmp/deploy_collectstatic.log; exit 1; }
 
 if command -v systemctl >/dev/null 2>&1; then
   echo "Restarting $SERVICE_NAME via systemctl..."
