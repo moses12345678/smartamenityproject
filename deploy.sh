@@ -33,15 +33,15 @@ echo "Nginx service: $NGINX_SERVICE"
 # fi
 
 source "$VENV_DIR/bin/activate"
-echo "[1/3] Upgrading pip..."
+echo "[1/4] Upgrading pip..."
 python -m pip install --upgrade pip >/tmp/deploy_pip.log && echo "pip upgrade: OK" || { echo "pip upgrade FAILED"; cat /tmp/deploy_pip.log; exit 1; }
-echo "[2/3] Installing requirements..."
+echo "[2/4] Installing requirements..."
 python -m pip install -r requirements.txt >/tmp/deploy_requirements.log && echo "requirements install: OK" || { echo "requirements install FAILED"; cat /tmp/deploy_requirements.log; exit 1; }
 
 # Run migrations/static as part of deploy
-echo "[3/3] Applying migrations..."
+echo "[3/4] Applying migrations..."
 python manage.py migrate --noinput >/tmp/deploy_migrate.log && echo "migrate: OK" || { echo "migrate FAILED"; cat /tmp/deploy_migrate.log; exit 1; }
-echo "[extra] collectstatic..."
+echo "[4/4] Collecting static files..."
 python manage.py collectstatic --noinput >/tmp/deploy_collectstatic.log && echo "collectstatic: OK" || { echo "collectstatic FAILED"; cat /tmp/deploy_collectstatic.log; exit 1; }
 
 if command -v systemctl >/dev/null 2>&1; then
