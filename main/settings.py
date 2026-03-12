@@ -127,6 +127,7 @@ CORS_ALLOWED_ORIGINS = [o for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split('
     'http://127.0.0.1:3000',
     'http://localhost:4173',
     'http://127.0.0.1:4173',
+    'https://manager.smartamenity.net',
 ]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [o for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o]
