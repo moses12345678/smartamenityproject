@@ -128,8 +128,17 @@ CORS_ALLOWED_ORIGINS = [o for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split('
     'http://localhost:4173',
     'http://127.0.0.1:4173',
     'https://manager.smartamenity.net',
+    'https://smartamenity.net',
+    'https://www.smartamenity.net',
 ]
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    'DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT'
+]
+CORS_ALLOW_HEADERS = [
+    'authorization', 'content-type', 'accept', 'origin', 'user-agent',
+    'cache-control', 'x-requested-with'
+]
 CSRF_TRUSTED_ORIGINS = [o for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o]
 
 #FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://app.smartamenity.com')
