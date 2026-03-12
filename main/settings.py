@@ -122,7 +122,7 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-CORS_ALLOWED_ORIGINS = [o for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o] or [
+DEFAULT_CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://localhost:4173',
@@ -131,6 +131,9 @@ CORS_ALLOWED_ORIGINS = [o for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split('
     'https://smartamenity.net',
     'https://www.smartamenity.net',
 ]
+ENV_CORS_ALLOWED_ORIGINS = [o for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o]
+# Union of defaults and env override so production domains are always whitelisted
+CORS_ALLOWED_ORIGINS = sorted(set(DEFAULT_CORS_ALLOWED_ORIGINS + ENV_CORS_ALLOWED_ORIGINS))
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     'DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT'
