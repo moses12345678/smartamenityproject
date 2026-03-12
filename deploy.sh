@@ -6,6 +6,7 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
 SERVICE_NAME="${GUNICORN_SERVICE:-gunicorn}"
+NGINX_SERVICE="${NGINX_SERVICE:-nginx}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 # Resolve virtualenv: prefer user-specified; else auto-detect ../venv then ./venv
@@ -23,6 +24,7 @@ fi
 echo "Using project dir: $PROJECT_DIR"
 echo "Virtualenv: $VENV_DIR"
 echo "Gunicorn service: $SERVICE_NAME"
+echo "Nginx service: $NGINX_SERVICE"
 
 # Virtualenv already expected to exist; uncomment if you ever need auto-create
 # if [ ! -d "$VENV_DIR" ]; then
@@ -46,6 +48,10 @@ if command -v systemctl >/dev/null 2>&1; then
   echo "Restarting $SERVICE_NAME via systemctl..."
   sudo systemctl restart "$SERVICE_NAME"
   sudo systemctl status "$SERVICE_NAME" --no-pager
+
+  echo "Restarting $NGINX_SERVICE via systemctl..."
+  sudo systemctl restart "$NGINX_SERVICE"
+  sudo systemctl status "$NGINX_SERVICE" --no-pager
 else
   echo "systemctl not found; start gunicorn manually if needed."
 fi
