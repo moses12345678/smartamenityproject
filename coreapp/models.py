@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
@@ -219,6 +220,32 @@ class AmenitySession(models.Model):
 
     def __str__(self):
         return f"{self.resident.user.email} - {self.amenity.name}"
+
+
+def default_token_expiry():
+    return timezone.now() + timedelta(days=7)
+
+
+class AmenityCheckInToken(models.Model):
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    amenity = models.ForeignKey(Amenity, on_delete=models.CASCADE, related_name="checkin_tokens")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="issued_checkin_tokens"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=default_token_expiry)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["token"]),
+            models.Index(fields=["amenity"]),
+            models.Index(fields=["is_active", "expires_at"]),
+        ]
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"QR token for {self.amenity.name} ({self.token})"
 
 
 class ContactRequest(models.Model):

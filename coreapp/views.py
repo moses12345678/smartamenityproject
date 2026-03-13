@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .models import Amenity, Property, AmenitySession, ContactRequest
+from .models import Amenity, AmenityCheckInToken, Property, AmenitySession, ContactRequest
 from .permissions import HasResidentProfile, IsResidentOfAmenityProperty
 from .serializers import (
     AmenityCheckInSerializer,
@@ -107,6 +107,34 @@ class AmenityCheckOutView(AmenityBaseView):
         serializer.is_valid(raise_exception=True)
         session = serializer.save()
         return Response(serializer.to_representation(session), status=status.HTTP_200_OK)
+
+
+class AmenityQRCheckInView(AmenityBaseView):
+    def post(self, request):
+        token_value = request.data.get("token")
+        if not token_value:
+            return Response({"detail": "token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            token_obj = AmenityCheckInToken.objects.select_related("amenity", "amenity__property").get(
+                token=token_value, is_active=True
+            )
+        except (AmenityCheckInToken.DoesNotExist, ValueError):
+            return Response({"detail": "Invalid or inactive token."}, status=status.HTTP_404_NOT_FOUND)
+
+        if token_obj.expires_at and timezone.now() > token_obj.expires_at:
+            return Response({"detail": "Token has expired."}, status=status.HTTP_410_GONE)
+
+        amenity = token_obj.amenity
+        resident = self.get_resident(request.user)
+        self.check_object_permissions(request, amenity)
+
+        serializer = AmenityCheckInSerializer(
+            data={}, context={"amenity": amenity, "resident": resident, "request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        session = serializer.save()
+        return Response(serializer.to_representation(session), status=status.HTTP_201_CREATED)
 
 
 class AmenityStatusView(AmenityBaseView):

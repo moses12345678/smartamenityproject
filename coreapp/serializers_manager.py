@@ -1,10 +1,9 @@
+from django.conf import settings
+from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import serializers
 
-from django.db.models import Sum
-from django.utils import timezone
-
-from .models import Amenity, ResidentProfile, User
+from .models import Amenity, AmenityCheckInToken, ResidentProfile, User
 from .services import property_timezone
 
 
@@ -44,6 +43,34 @@ class ManagerResidentSerializer(serializers.ModelSerializer):
             }
             for s in sessions
         ]
+
+
+class AmenityCheckInTokenSerializer(serializers.ModelSerializer):
+    amenity_name = serializers.CharField(source="amenity.name", read_only=True)
+    qr_value = serializers.SerializerMethodField()
+    qr_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AmenityCheckInToken
+        fields = (
+            "token",
+            "amenity",
+            "amenity_name",
+            "expires_at",
+            "is_active",
+            "created_at",
+            "qr_value",
+            "qr_url",
+        )
+        read_only_fields = fields
+
+    def get_qr_value(self, obj: AmenityCheckInToken):
+        # Raw payload that can be fed directly into a QR generator on the frontend
+        return str(obj.token)
+
+    def get_qr_url(self, obj: AmenityCheckInToken):
+        base = getattr(settings, "FRONTEND_URL", "").rstrip("/") or "https://app.smartamenity.net"
+        return f"{base}/qr-checkin/{obj.token}"
 
 
 class ManagerAmenitySerializer(serializers.ModelSerializer):

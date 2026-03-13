@@ -1,13 +1,16 @@
+from datetime import timedelta
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from django.utils import timezone
 
-from .models import Amenity, Property, User, ResidentProfile
+from .models import Amenity, AmenityCheckInToken, Property, User, ResidentProfile
 from .permissions import IsManager
 from .serializers import PropertyInviteSerializer
 from .serializers_manager import (
+    AmenityCheckInTokenSerializer,
     ManagerResidentSerializer,
     ManagerAmenitySerializer,
     ManagerCreateTenantSerializer,
@@ -120,3 +123,34 @@ class ManagerAmenityListView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class ManagerAmenityQRCodeView(APIView):
+    permission_classes = [IsAuthenticated, IsManager]
+
+    def post(self, request, amenity_id):
+        resident = getattr(request.user, "resident_profile", None)
+        if not resident:
+            return Response({"detail": "No property assigned."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            amenity = Amenity.objects.get(pk=amenity_id, property=resident.property)
+        except Amenity.DoesNotExist:
+            return Response({"detail": "Amenity not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        expires_in_minutes = request.data.get("expires_in_minutes", 24 * 60)
+        try:
+            expires_in_minutes = int(expires_in_minutes)
+        except (TypeError, ValueError):
+            return Response({"detail": "expires_in_minutes must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
+        if expires_in_minutes <= 0:
+            return Response({"detail": "expires_in_minutes must be positive."}, status=status.HTTP_400_BAD_REQUEST)
+        # cap at 30 days to prevent forever tokens
+        expires_in_minutes = min(expires_in_minutes, 30 * 24 * 60)
+
+        token = AmenityCheckInToken.objects.create(
+            amenity=amenity,
+            created_by=request.user,
+            expires_at=timezone.now() + timedelta(minutes=expires_in_minutes),
+        )
+        data = AmenityCheckInTokenSerializer(token).data
+        return Response(data, status=status.HTTP_201_CREATED)

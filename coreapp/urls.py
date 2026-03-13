@@ -13,12 +13,14 @@ from .views import (
     RegisterView,
     LeavePropertyView,
     MeView,
+    AmenityQRCheckInView,
 )
 from .views_manager import (
     ManagerPropertyListView,
     ManagerResidentListView,
     ManagerResidentDetailView,
     ManagerAmenityListView,
+    ManagerAmenityQRCodeView,
 )
 from .views import ContactRequestCreateView
 
@@ -34,6 +36,7 @@ urlpatterns = [
     path("amenities/<int:amenity_id>/checkin/", AmenityCheckInView.as_view(), name="amenity-checkin"),
     path("amenities/<int:amenity_id>/checkout/", AmenityCheckOutView.as_view(), name="amenity-checkout"),
     path("amenities/<int:amenity_id>/status/", AmenityStatusView.as_view(), name="amenity-status"),
+    path("amenities/checkin/qr/", AmenityQRCheckInView.as_view(), name="amenity-qr-checkin"),
     path("users/me/", MeView.as_view(), name="user-me"),
     path("contact-requests/", ContactRequestCreateView.as_view(), name="contact-request-create"),
     path("manager/properties/", ManagerPropertyListView.as_view(), name="manager-properties"),
@@ -41,4 +44,5 @@ urlpatterns = [
     path("manager/residents/<int:resident_id>/", ManagerResidentDetailView.as_view(), name="manager-resident-detail"),
     path("manager/amenities/", ManagerAmenityListView.as_view(), name="manager-amenities"),
     path("manager/amenities/<int:amenity_id>/", ManagerAmenityListView.as_view(), name="manager-amenity-detail"),
+    path("manager/amenities/<int:amenity_id>/qr/", ManagerAmenityQRCodeView.as_view(), name="manager-amenity-qr"),
 ]
